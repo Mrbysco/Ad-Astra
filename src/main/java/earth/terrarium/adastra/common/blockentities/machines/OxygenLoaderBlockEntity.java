@@ -99,7 +99,7 @@ public class OxygenLoaderBlockEntity extends RecipeMachineBlockEntity<OxygenLoad
     @Override
     public void recipeTick(ServerLevel level, ValueStorage energyStorage) {
         if (recipe == null) return;
-        if (!canCraft()) {
+        if (!canCraft() || fluid.insert(1, recipe.result().resource(), FluidAmounts.toPlatformAmount(recipe.result().amount()), true) != FluidAmounts.toPlatformAmount(recipe.result().amount())) {
             clearRecipe();
             return;
         }
@@ -116,8 +116,8 @@ public class OxygenLoaderBlockEntity extends RecipeMachineBlockEntity<OxygenLoad
     public void craft() {
         if (recipe == null) return;
 
-        fluid.extract(fluid.getResource(0), recipe.input().getAmount(), false);
-        fluid.insert(recipe.result().resource(), recipe.result().amount(), false);
+        fluid.extract(fluid.getResource(0), FluidAmounts.toPlatformAmount(recipe.input().getAmount()), false);
+        fluid.insert(1, recipe.result().resource(), FluidAmounts.toPlatformAmount(recipe.result().amount()), false);
         fluid.update();
 
         updateSlots();

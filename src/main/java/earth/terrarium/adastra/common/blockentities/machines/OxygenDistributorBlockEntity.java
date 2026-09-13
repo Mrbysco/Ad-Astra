@@ -124,12 +124,7 @@ public class OxygenDistributorBlockEntity extends OxygenLoaderBlockEntity {
         if (canFunction() && canDistribute) {
             getEnergyStorage().extract(calculateEnergyPerTick(), false);
             setLit(true);
-            accumulatedFluid += fluidPerTick;
-            int wholeBuckets = (int) (accumulatedFluid / 1000f);
-            if (wholeBuckets > 0) {
-                consumeDistribution(FluidAmounts.toPlatformAmount(Math.max(1, wholeBuckets / 1000)));
-                accumulatedFluid -= wholeBuckets;
-            }
+            consumeDistribution(Math.max(FluidAmounts.toPlatformAmount(1), fluidPerTick));
 
             if (time % MachineConfig.distributionRefreshRate == 0) tickOxygen(level, pos, state);
 
