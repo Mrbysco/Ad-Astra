@@ -73,7 +73,7 @@ public class OxygenLoaderBlockEntity extends RecipeMachineBlockEntity<OxygenLoad
                 1,
                 (tank, holder) -> level().getRecipeManager().getAllRecipesFor(ModRecipeTypes.OXYGEN_LOADING.get())
                     .stream()
-                    .anyMatch(r -> r.input().test(holder)),
+                    .anyMatch(r -> r.input().getIngredient().test(holder)),
                 (tank, holder) -> level().getRecipeManager().getAllRecipesFor(ModRecipeTypes.OXYGEN_LOADING.get())
                     .stream()
                     .anyMatch(r -> r.result().matches(holder))));
@@ -93,7 +93,7 @@ public class OxygenLoaderBlockEntity extends RecipeMachineBlockEntity<OxygenLoad
     public void recipeTick(ServerLevel level, WrappedBlockEnergyContainer energyStorage) {
         if (recipe == null) return;
         if (fluidContainer == null) getFluidContainer();
-        if (!canCraft()) {
+        if (!canCraft() || recipe.result().getFluidAmount() != fluidContainer.internalInsert(recipe.result(), true)) {
             clearRecipe();
             return;
         }
