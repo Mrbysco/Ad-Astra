@@ -25,9 +25,9 @@ import org.joml.Matrix4f;
 public class ModSkyRenderer {
 
     private final PlanetRenderer renderer;
-
     @Nullable
     private VertexBuffer starBuffer;
+    private boolean starsInitialized = false;
 
     public ModSkyRenderer(PlanetRenderer renderer) {
         this.renderer = renderer;
@@ -37,7 +37,10 @@ public class ModSkyRenderer {
         setupFog.run();
         if (isFoggy || inFog(camera)) return;
         if (!renderer.renderInRain() && level.isRaining()) return;
-        if (starBuffer == null) createStars();
+        if (!starsInitialized) {
+            createStars();
+            starsInitialized = true;
+        }
         Tesselator tesselator = Tesselator.getInstance();
 
         setSkyColor(level, camera, partialTick);
@@ -197,7 +200,13 @@ public class ModSkyRenderer {
     }
 
     public void createStars() {
-        Tesselator tesselator = Tesselator.getInstance();
+        if (renderer.stars() <= 0) {
+            if (starBuffer != null) {
+                starBuffer.close();
+            }
+            starBuffer = null;
+            return;
+        }
 
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
@@ -205,8 +214,14 @@ public class ModSkyRenderer {
             starBuffer.close();
         }
 
-        starBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        Tesselator tesselator = Tesselator.getInstance();
         MeshData renderedBuffer = drawStars(tesselator);
+        if (renderedBuffer == null) {
+            starBuffer = null;
+            return;
+        }
+
+        starBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         starBuffer.bind();
         starBuffer.upload(renderedBuffer);
         VertexBuffer.unbind();
@@ -215,6 +230,7 @@ public class ModSkyRenderer {
     public MeshData drawStars(Tesselator tesselator) {
         var random = RandomSource.create(10842);
         BufferBuilder bufferBuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        int starsAdded = 0;
 
         for (int i = 0; i < renderer.stars(); i++) {
             double x = random.nextFloat() * 2 - 1;
@@ -250,6 +266,7 @@ public class ModSkyRenderer {
 
             int color = renderer.starColors().getRandom(random).map(WeightedEntry.Wrapper::data).orElse(0xffffffff);
 
+            starsAdded++;
             for (int j = 0; j < 4; j++) {
                 double xOffset = ((j & 2) - 1) * scale;
                 double yOffset = ((j + 1 & 2) - 1) * scale;
@@ -267,6 +284,10 @@ public class ModSkyRenderer {
                     .setColor(color)
                     ;
             }
+        }
+
+        if (starsAdded == 0) {
+            return null;
         }
 
         return bufferBuilder.buildOrThrow();
